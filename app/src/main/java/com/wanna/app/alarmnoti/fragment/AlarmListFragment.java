@@ -264,7 +264,7 @@ public class AlarmListFragment extends ListFragment implements AbsListView.Multi
 
     private void createTestAlarm(Context context) {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(2015, 1, 24);
+        calendar.set(2015, 1, 25);
         //calendar.setTime(new Date("2015, 24, 1 23:00"));
         //calendar.add(Calendar.SECOND, 1); // 1초 뒤에 발생..
         mAlarmDb.createAlarm("test 1", calendar.getTimeInMillis(), calendar.getTimeInMillis() + 3600000, "");
