@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 20111229 LWH : gravity and minHeight are for center vertical~!! --><!-- 20120213 shlee : edit background -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/list_item_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/alarm_title_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/set_alarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false" />
+
+        <TextView
+            android:id="@+id/alarm_title"
+            style="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            tools:text="Calendar Event" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/alarm_start_time"
+        style="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="07:00" />
+
+    <TextView
+        android:id="@+id/alarm_dash"
+        style="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/dash" />
+
+    <TextView
+        android:id="@+id/alarm_end_time"
+        style="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="06:00" />
+
+    <TextView
+        android:id="@+id/alarm_recurrence"
+        style="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Mon Tue Wed Thur Fri Sat Sun" />
+
+</LinearLayout>

@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".AlarmListActivity">
+    <item
+        android:id="@+id/add_calendar_event"
+        android:orderInCategory="100"
+        android:title="@string/add.calendar.event" />
+
+    <item
+        android:id="@+id/add_alarm"
+        android:orderInCategory="100"
+        android:title="@string/add.alarm" />
+</menu>
