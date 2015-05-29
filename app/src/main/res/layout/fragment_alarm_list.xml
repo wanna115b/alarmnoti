@@ -1,5 +1,4 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
@@ -18,25 +17,25 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/add_calendar_event"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:text="@string/add.calendar.event"
+        android:textAllCaps="true" />
 
-        <Button
-            android:id="@+id/add_calendar_event"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add.calendar.event"
-            android:textAllCaps="true" />
+    <Button
+        android:id="@+id/add_alarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/add.alarm"
+        android:textAllCaps="true" />
 
-        <Button
-            android:id="@+id/add_alarm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add.alarm"
-            android:textAllCaps="true" />
+    <Button
+        android:id="@+id/delete_all"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/delete.all"
+        android:textAllCaps="true" />
 
-    </LinearLayout>
 </LinearLayout>

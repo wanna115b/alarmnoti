@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -52,6 +53,7 @@ public class AlarmListFragment extends ListFragment implements AbsListView.Multi
     private AlarmDB mAlarmDb;
     private Button mAddCalendarEventBtn;
     private Button mAddAlarmBtn;
+    private Button mDeleteAllBtn;
 
     HashMap<Integer, CalendarEvent> mCalendarEventMap = new HashMap<>();
     HashMap<Integer, Alarm> mAlarmMap = new HashMap<>();
@@ -187,12 +189,9 @@ public class AlarmListFragment extends ListFragment implements AbsListView.Multi
         mAddCalendarEventBtn = (Button) getActivity().findViewById(R.id.add_calendar_event);
         mAddCalendarEventBtn.setOnClickListener(v -> addCalendarEvent());
         mAddAlarmBtn = (Button) getActivity().findViewById(R.id.add_alarm);
-        mAddAlarmBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addAlarm();
-            }
-        });
+        mAddAlarmBtn.setOnClickListener(v -> addAlarm());
+        mDeleteAllBtn = (Button) getActivity().findViewById(R.id.delete_all);
+        mDeleteAllBtn.setOnClickListener(v -> deleteAllAlarm());
     }
 
     @Override
@@ -260,6 +259,11 @@ public class AlarmListFragment extends ListFragment implements AbsListView.Multi
     private void addAlarm() {
         Intent intent = new Intent(getActivity(), AddAlarmActivity.class);
         startActivityForResult(intent, REQUEST_ALARM);
+    }
+
+    private void deleteAllAlarm() {
+        mAlarmDb.deleteAllAlarm();
+        mAlarmListAdapter.changeCursor(mAlarmDb.fetchAllAlarm());
     }
 
     private void createTestAlarm(Context context) {
