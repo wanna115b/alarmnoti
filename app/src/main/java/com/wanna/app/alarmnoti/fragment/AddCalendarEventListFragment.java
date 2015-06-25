@@ -22,8 +22,9 @@ import com.wanna.app.alarmnoti.R;
 import com.wanna.app.alarmnoti.util.Alarm;
 import com.wanna.app.alarmnoti.util.AlarmDB;
 import com.wanna.app.alarmnoti.util.AuthPreferences;
-import com.wanna.app.alarmnoti.view.adapter.AddCalendarEventListAdapter;
 import com.wanna.app.alarmnoti.util.CalendarEvent;
+import com.wanna.app.alarmnoti.util.GoogleAccount;
+import com.wanna.app.alarmnoti.view.adapter.AddCalendarEventListAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,7 +33,6 @@ import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -206,7 +206,7 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
             SparseBooleanArray sba = mListView.getCheckedItemPositions();
             mAuthPreferences = new AuthPreferences(getActivity());
             String accessToken = mAuthPreferences.getToken();
-            setAlarmOff(accessToken);
+            getCalendarEvent(accessToken);
         });
 
         mAuthPreferences = new AuthPreferences(getActivity());
@@ -230,7 +230,7 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
                 );
     }
 
-    private void setAlarmOff(String accessToken) {
+    private void getCalendarEvent(String accessToken) {
         Observer<HashMap<Integer, Alarm>> myObserver = new Observer<HashMap<Integer, Alarm>>() {
             @Override
             public void onCompleted() {
@@ -246,7 +246,7 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
             public void onNext(HashMap<Integer, Alarm> hm) {
                 for (int i = 0; i < hm.size(); i++) {
                     Alarm alarm = hm.get(i);
-                    mAlarmDb.createAlarm(alarm.title, alarm.startTime, alarm.endTime, alarm.recurrence, alarm.calendarEventId);
+                    mAlarmDb.createAlarm(alarm.calendarId, alarm.calendarTitle, alarm.calendarEventId, alarm.title, alarm.startTime, alarm.endTime, alarm.recurrence);
                     Log.e(TAG, String.format("createAlarm DB:\n  title:%s, start%s, end:%s, recurrence:%s, id:%s", alarm.title, alarm.startTime, alarm.endTime, alarm.recurrence, alarm.calendarEventId));
                 }
             }
@@ -256,7 +256,7 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
                 .map(this::getCheckedEvent)
                 .flatMap(Observable::from)
                 .subscribeOn(Schedulers.newThread())
-                .map(o -> getGetMethod((String) o))
+                .map(o -> getGetMethod((CalendarEvent) o))
                 .map(this::getCalendarAlarm)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(myObserver);
@@ -265,10 +265,12 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
     private Object[] getCheckedEvent(String accessToken) {
         SparseBooleanArray sba = mListView.getCheckedItemPositions();
         int eventSize = mListView.getCount();
-        ArrayList<String> al = new ArrayList<>();
+        ArrayList<CalendarEvent> al = new ArrayList<>();
         for (int i = 0; i < eventSize; i++) {
             if (sba != null && sba.get(i) == true) {
-                al.add(String.format(GET_METHOD_CALENDAR_EVENT, mCalendarEventMap.get(i).id, makeAccessToken(mCalendarEventMap.get(i).accessRole)));
+                CalendarEvent ce = mCalendarEventMap.get(i);
+                ce.uri = String.format(GET_METHOD_CALENDAR_EVENT, ce.id, makeAccessToken(ce.accessRole));
+                al.add(ce);
             }
         }
         return al.toArray();
@@ -286,12 +288,39 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
             Log.d(TAG, "Response Code:" + hr.code() + "\nResponse Message:" + response);
             mAuthPreferences.setToken(null);
             AccountManager accountManager = AccountManager.get(getActivity());
-            accountManager.invalidateAuthToken("com.google", mAuthPreferences.getToken());
+            accountManager.invalidateAuthToken("com.google", null);
             Log.d(TAG, getActivity().getString(R.string.restart_app));
             getActivity().finish();
         }
 
         return response;
+    }
+
+    private CalendarEvent getGetMethod(CalendarEvent calendarEvent) {
+        HttpRequest hr = HttpRequest.get(calendarEvent.uri);
+        String response = hr.body();
+
+        if (hr.ok() == true) {
+            if (response != null && TextUtils.isEmpty(response) == false) {
+                getNextSyncToken(response);
+            }
+        } else {
+            Log.d(TAG, "Response Code:" + hr.code() + "\nResponse Message:" + response);
+//            mAuthPreferences.setToken(null);
+//            AccountManager accountManager = AccountManager.get(getActivity());
+//            accountManager.invalidateAuthToken("com.google", mAuthPreferences.getToken());
+            GoogleAccount ga = new GoogleAccount(this.getActivity(), new GoogleAccount.AuthenticatedStuff() {
+                @Override
+                public void doCoolAuthenticatedStuff() {
+                }
+            });
+            ga.requestToken();
+            Log.d(TAG, getActivity().getString(R.string.restart_app));
+            getActivity().finish();
+        }
+
+        calendarEvent.uri = response;
+        return calendarEvent;
     }
 
     private HashMap<Integer, CalendarEvent> getCalendarSubejcts(String htmlResponse) {
@@ -319,25 +348,32 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
         }
     }
 
-    private HashMap<Integer, Alarm> getCalendarAlarm(String htmlResponse) {
+    private HashMap<Integer, Alarm> getCalendarAlarm(CalendarEvent calendarEvent) {
+        String htmlResponse = calendarEvent.uri;
         try {
             JSONObject jo = new JSONObject(htmlResponse);
+            String calendarTitle = jo.getString("summary");
+
             JSONArray ja = new JSONArray(jo.getString("items"));
             int length = ja.length();
             JSONObject jItem = null;
+            Log.e(TAG, htmlResponse);
             for (int i = 0; i < length; i++) {
                 jItem = ja.getJSONObject(i);
-                //Log.e(TAG, String.format("JAON Public:\n  id:%s, summary:%s, start%s, end:%s", jItem.getString("id"), jItem.getString("summary"), jItem.getString("start"), jItem.getString("end")));
+                //Log.d(TAG, String.format("JSON Public:\n  id:%s, summary:%s, start%s, end:%s", jItem.getString("id"), jItem.getString("summary"), jItem.getString("start"), jItem.getString("end")));
                 Alarm alarm = new Alarm();
-                String temp = jItem.getString("id");
+                alarm.calendarId = calendarEvent.id;
+                alarm.calendarTitle = calendarEvent.summary;
                 alarm.calendarEventId = jItem.getString("id");
-                alarm.title = jItem.getString("summary");
+                if (jItem.has("summary") == true) {
+                    alarm.title = jItem.getString("summary");
+                    Log.e(TAG, "summary : " + alarm.title);
+                }
 
                 if (jItem.has("recurrence") == true) {
                     String rec = jItem.getString("recurrence");
-                    Calendar c = Calendar.getInstance();
-                    Log.e(TAG, "recurrence : " + rec);
-                    alarm.recurrence = rec;
+                    alarm.recurrence = alarm.convertRecurrence(rec);
+                    Log.e(TAG, String.format("recurrence : %s - %d", rec, alarm.recurrence));
                 }
                 if (jItem.has("recurringEventId") == true) {
                     String recId = jItem.getString("recurringEventId");
@@ -386,8 +422,7 @@ public class AddCalendarEventListFragment extends ListFragment implements Adapte
         try {
             JSONObject jo = new JSONObject(htmlRes);
             if (jo.has("nextSyncToken") == true) {
-                String nextSyncToken = jo.getString("nextSyncToken");
-                Log.e(TAG, "nextSyncToken: " + nextSyncToken);
+                mAuthPreferences.setNextToken(jo.getString("nextSyncToken"));
             }
         } catch (JSONException e) {
             e.printStackTrace();

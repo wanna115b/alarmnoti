@@ -5,7 +5,8 @@ import android.content.SharedPreferences;
 
 public class AuthPreferences {
     private static final String KEY_USER = "user";
-    private static final String KEY_TOKEN = "token";
+    private static final String KEY_TOKEN = "SyncToken";
+    private static final String KEY_NEXT_TOKEN = "nextSyncToken";
 
     private SharedPreferences preferences;
 
@@ -26,11 +27,19 @@ public class AuthPreferences {
         editor.commit();
     }
 
-    public String getUser() {
-        return preferences.getString(KEY_USER, null);
+    public void setNextToken(String password) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(KEY_NEXT_TOKEN, password);
+        editor.commit();
     }
+
+    public String getUser() { return preferences.getString(KEY_USER, null); }
 
     public String getToken() {
         return preferences.getString(KEY_TOKEN, null);
+    }
+
+    public String getNextToken() {
+        return preferences.getString(KEY_NEXT_TOKEN, null);
     }
 }

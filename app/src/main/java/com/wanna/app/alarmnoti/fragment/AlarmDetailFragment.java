@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -82,5 +83,58 @@ public class AlarmDetailFragment extends Fragment {
         mAlarmOff.setOnClickListener(v -> Toast.makeText(mFragment.getActivity(), "Alarm Off", Toast.LENGTH_SHORT).show());
 
         return rootView;
+    }
+
+
+    private void setVolumeDefault() {
+        if (mDefaultVolume == -1 || mRingerMode == -1) {
+            Toast.makeText(getActivity(), "not changed volume", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AudioManager am = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
+        am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, mDefaultVolume, 0);
+        mDefaultVolume = -1;
+        am.setRingerMode(mRingerMode);
+        mRingerMode = -1;
+    }
+
+    private void setVolumeMin() {
+        if (mDefaultVolume != -1 || mRingerMode != -1) {
+            Toast.makeText(getActivity(), "Already set volume", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AudioManager am = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
+        mDefaultVolume = am.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
+        am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, 0);
+        mRingerMode = am.getRingerMode();
+        am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+    }
+
+    private void setVolumeMax() {
+        if (mDefaultVolume != -1 || mRingerMode != -1) {
+            Toast.makeText(getActivity(), "Already set volume", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AudioManager am = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
+        mDefaultVolume = am.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
+        am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, am.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION), 0);
+        mRingerMode = am.getRingerMode();
+        am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+    }
+
+    public void make(Context context, long time) {
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        PendingIntent appIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+
+        //Calendar calendar = Calendar.getInstance();
+        //calendar.setTimeInMillis(System.currentTimeMillis());
+        //calendar.add(Calendar.SECOND, 1); // 1초 뒤에 발생..
+
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        //am.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), appIntent);
+        am.set(AlarmManager.RTC_WAKEUP, time, appIntent);
     }
 }

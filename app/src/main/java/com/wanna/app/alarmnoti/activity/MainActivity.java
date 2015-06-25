@@ -1,31 +1,21 @@
 package com.wanna.app.alarmnoti.activity;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 
 import com.wanna.app.alarmnoti.R;
-import com.wanna.app.alarmnoti.util.AuthPreferences;
+import com.wanna.app.alarmnoti.util.GoogleAccount;
 
 
 public class MainActivity extends Activity {
     private final String TAG = "MainActivity";
-    private final String SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
-    private final int AUTHORIZATION_CODE = 1993;
-    private final int ACCOUNT_CODE = 1601;
 
     private Button mStartBt;
-
-    private AuthPreferences mAuthPreferences;
-    private AccountManager mAccountManager;
+    private GoogleAccount mGoogleAccount;
 
     /*
     private WebView mWebview;
@@ -50,36 +40,22 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mStartBt = (Button) findViewById(R.id.start);
-        mStartBt.setOnClickListener(v -> {
-            if (mAuthPreferences.getUser() != null
-                    && mAuthPreferences.getToken() != null) {
-                doCoolAuthenticatedStuff();
-            } else {
-                chooseAccount();
-            }
+        mGoogleAccount = new GoogleAccount(this, (GoogleAccount.AuthenticatedStuff) () -> {
+            Intent intent = new Intent(MainActivity.this, AlarmListActivity.class);
+            startActivity(intent);
         });
 
-        mAccountManager = AccountManager.get(this);
-        mAuthPreferences = new AuthPreferences(this);
+        mStartBt = (Button) findViewById(R.id.start);
+        mStartBt.setOnClickListener(v -> {
+            mGoogleAccount.checkAccount();
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == RESULT_OK) {
-            if (requestCode == AUTHORIZATION_CODE) {
-                requestToken();
-            } else if (requestCode == ACCOUNT_CODE) {
-                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                mAuthPreferences.setUser(accountName);
-
-                // invalidate old tokens which might be cached. we want a fresh one, which is guaranteed to work
-                invalidateToken();
-                requestToken();
-            }
-        }
+        mGoogleAccount.result(requestCode, resultCode, data);
     }
 
     @Override
@@ -102,54 +78,5 @@ public class MainActivity extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void doCoolAuthenticatedStuff() {
-        Intent intent = new Intent(MainActivity.this, AlarmListActivity.class);
-        startActivity(intent);
-    }
-
-    private void chooseAccount() {
-        Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[]{"com.google"}, false, null, null, null, null);
-        startActivityForResult(intent, ACCOUNT_CODE);
-    }
-
-    private void requestToken() {
-        Account userAccount = null;
-        String user = mAuthPreferences.getUser();
-        for (Account account : mAccountManager.getAccountsByType("com.google")) {
-            if (account.name.equals(user)) {
-                userAccount = account;
-                break;
-            }
-        }
-
-        mAccountManager.getAuthToken(userAccount, "oauth2:" + SCOPE, null, this, new OnTokenAcquired(), null);
-    }
-
-    private void invalidateToken() {
-        AccountManager accountManager = AccountManager.get(this);
-        accountManager.invalidateAuthToken("com.google", mAuthPreferences.getToken());
-        mAuthPreferences.setToken(null);
-    }
-
-    private class OnTokenAcquired implements AccountManagerCallback<Bundle> {
-        @Override
-        public void run(AccountManagerFuture<Bundle> result) {
-            try {
-                Bundle bundle = result.getResult();
-                Intent launch = (Intent) bundle.get(AccountManager.KEY_INTENT);
-                if (launch != null) {
-                    startActivityForResult(launch, AUTHORIZATION_CODE);
-                } else {
-                    String token = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-                    mAuthPreferences.setToken(token);
-                    doCoolAuthenticatedStuff();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                //throw new RuntimeException(e);
-            }
-        }
     }
 }

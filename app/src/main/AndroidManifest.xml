@@ -11,11 +11,11 @@
         android:name="android.support.multidex.MultiDexApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app.name"
+        android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
             android:name="com.wanna.app.alarmnoti.activity.MainActivity"
-            android:label="@string/app.name">
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -25,15 +25,19 @@
 
         <activity
             android:name="com.wanna.app.alarmnoti.activity.AlarmListActivity"
-            android:label="@string/app.name"></activity>
+            android:label="@string/app_name"></activity>
         <activity
             android:name="com.wanna.app.alarmnoti.activity.AddCalendarEventListActivity"
-            android:label="@string/add.calendar.event"></activity>
+            android:label="@string/add_calendar_event"></activity>
         <activity
             android:name="com.wanna.app.alarmnoti.activity.AddAlarmActivity"
-            android:label="@string/add.alarm"></activity>
+            android:label="@string/add_alarm"></activity>
 
-        <receiver android:name="com.wanna.app.alarmnoti.receiver.AlarmReceiver"></receiver>
+        <receiver android:name="com.wanna.app.alarmnoti.receiver.AlarmReceiver">
+            <intent-filter>
+                <action android:name="com.wanna.app.alarmnoti.alarm" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
